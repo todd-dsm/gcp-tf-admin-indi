@@ -13,12 +13,12 @@ variable "zone" {
   type        = "string"
 }
 
-//variable "billing_account" {
-//  description = "billing account id; from ENV; E.G.: 91FA7C-F1BE38-A942A9"
-//  type        = "string"
-//}
-//
-//variable "project_name" {
-//  description = "test project; from setup/create-tf-admin.sh"
-//  type        = "string"
-//}
+variable "currentProject" {
+  description = "Currently configured project ID; from ENV; E.G.: My First Project"
+  type        = "string"
+}
+
+variable "projectCreds" {
+  description = "Path to credentials file; from ENV; E.G.: ~/.config/gcloud/terraform.json"
+  type        = "string"
+}

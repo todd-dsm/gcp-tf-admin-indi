@@ -13,11 +13,13 @@ set -x
 ### VARIABLES
 ###----------------------------------------------------------------------------
 declare -r svcAcctName='terraform'
-serviceEmail="${svcAcctName}@${currentProject}.iam.gserviceaccount.com"
+serviceEmail="${svcAcctName}@${TF_VAR_currentProject}.iam.gserviceaccount.com"
 # TARGET FORMAT:   terraform@projectName.iam.gserviceaccount.com
 serviceAccount="serviceAccount:${serviceEmail}"
-declare -a envVARs=('currentProject' 'TF_CREDS')
-declare -a gcpRoles=('viewer' 'storage.admin')
+declare -a envVARs=('TF_VAR_currentProject' 'TF_VAR_projectCreds'
+    'TF_VAR_billing_account')
+declare -a gcpRoles=('viewer' 'storage.admin' 'compute.instanceAdmin.v1'
+    'iam.serviceAccountKeyAdmin')
 declare -a projAPIs=('cloudresourcemanager' 'cloudbilling' 'iam' 'compute')
 #declare -a orgPerms=('resourcemanager.projectCreator' 'billing.user')
 
@@ -53,11 +55,11 @@ pMsg "All required variables check-out; advancing to the next step."
 ### Link billing and set project as default
 ###---
 ### Link the Admin project space to the billing account
-gcloud beta billing projects link "$currentProject" \
+gcloud beta billing projects link "$TF_VAR_currentProject" \
     --billing-account "$TF_VAR_billing_account"
 
 ### set project as default for now
-gcloud config set project "$currentProject"
+gcloud config set project "$TF_VAR_currentProject"
 
 
 ###---
@@ -69,7 +71,7 @@ gcloud iam service-accounts create "$svcAcctName" \
     --display-name "Terraform admin account for $USER"
 
 pMsg "Creating keys for 'terraform' service-account..."
-gcloud iam service-accounts keys create "$TF_CREDS" \
+gcloud iam service-accounts keys create "$TF_VAR_projectCreds" \
     --iam-account "$serviceEmail"
 
 
@@ -80,7 +82,7 @@ gcloud iam service-accounts keys create "$TF_CREDS" \
 ###---
 printf '\n\n%s\n' "Granting roles to $serviceEmail..."
 for adminRole in "${gcpRoles[@]}"; do
-    gcloud projects add-iam-policy-binding "$currentProject" \
+    gcloud projects add-iam-policy-binding "$TF_VAR_currentProject" \
         --member "$serviceAccount" \
         --role   "roles/${adminRole}"
     pMsg "  * $adminRole"
@@ -89,10 +91,10 @@ done
 
 ###---
 ### Enable the APIs
-### Any action taken by Terraform (under the currentProject with serviceAccount)
+### Any action taken by Terraform (under the TF_VAR_currentProject with serviceAccount)
 ### requires requisite APIs are enabled.
 ###---
-printf '\n\n%s\n' "Enabling required APIs for $currentProject..."
+printf '\n\n%s\n' "Enabling required APIs for $TF_VAR_currentProject..."
 for adminAPI in "${projAPIs[@]}"; do
     gcloud services enable "${adminAPI}.googleapis.com"
     pMsg "  * $adminAPI"
@@ -118,7 +120,7 @@ done
 ### Setup Terraform state storage
 ###---
 printf '\n\n%s\n' "Creating a bucket for remote terraform state..."
-gsutil mb -p "$currentProject" "gs://${currentProject}"
+gsutil mb -p "$TF_VAR_currentProject" "gs://${TF_VAR_currentProject}"
 
 cat > backend.tf <<EOF
 /*
@@ -129,8 +131,8 @@ cat > backend.tf <<EOF
 */
 terraform {
   backend "gcs" {
-    bucket  = "$currentProject"
-    project = "$currentProject"
+    bucket  = "$TF_VAR_currentProject"
+    project = "$TF_VAR_currentProject"
     prefix  = "terraform/state"
   }
 }
@@ -140,15 +142,16 @@ EOF
 ###---
 ### Enable storage versioning
 ###---
-gsutil versioning set on "gs://${currentProject}"
+gsutil versioning set on "gs://${TF_VAR_currentProject}"
+gsutil iam ch "${serviceAccount}:objectCreator" "gs://${TF_VAR_currentProject}"
 
 
 ###---
 ### Export the goodies
 ###---
-export GOOGLE_APPLICATION_CREDENTIALS="$TF_CREDS"
-export GOOGLE_PROJECT="$currentProject"
-export TF_VAR_project_name="$currentProject"
+export GOOGLE_APPLICATION_CREDENTIALS="$TF_VAR_projectCreds"
+export GOOGLE_PROJECT="$TF_VAR_currentProject"
+export TF_VAR_project_name="$TF_VAR_currentProject"
 
 
 ###---

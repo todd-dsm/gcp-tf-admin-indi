@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2154
 # PURPOSE:  Generate some variables for GCP/GKE. This file is called with one
 #           argument while sourcing it in.
 # -----------------------------------------------------------------------------
@@ -12,7 +13,7 @@ envBuild="$1"
 
 # -----------------------------------------------------------------------------
 # TCB, baby
-export currentProject="$(gcloud config configurations list \
+export TF_VAR_currentProject="$(gcloud config configurations list \
     --format 'value(PROJECT)')"
 
 # gcloud beta billing accounts list
@@ -54,6 +55,6 @@ export TF_VAR_cluster_name="$newClusterName"
 #export TF_ADMIN="tf-admin-${USER}"
 export TF_ADMIN="foo-00-bar"
 export TF_VAR_bucket_name="${currentProject}"
-export TF_CREDS="$HOME/.config/gcloud/tf-${currentProject}.json"
+export TF_VAR_projectCreds="$HOME/.config/gcloud/tf-${TF_VAR_currentProject}.json"
 export planFile="/tmp/kubes-${newClusterName}.plan"
 set +x

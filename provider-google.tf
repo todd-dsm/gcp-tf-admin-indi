@@ -1,4 +1,6 @@
 provider "google" {
-  region  = "${var.region}"
-  zone    = "${var.zone}"
+  credentials = "${file("${var.projectCreds}")}"
+  region      = "${var.region}"
+  zone        = "${var.zone}"
+  project     = "${var.currentProject}"
 }
