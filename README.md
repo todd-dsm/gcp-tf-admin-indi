@@ -33,7 +33,7 @@ When this is over you should have a few things, a:
 ## Pregame
 * You _**must**_ have a GCP account
 * You _**must**_ have a payment type input (debit/credit card)
-* That project must be configured in the shell with `gcloud`
+* That project _**must**_ be configured in the shell with `gcloud`
 * You _**must**_ be authenticated with `gcloud`
 
 _**NOTE:**_ think about the names you assign to projects; they shouldn't be too revealing.
@@ -55,12 +55,12 @@ The configurations are coming soon to the wiki; not there yet.
 ## Do the Work
 
 _**NOTES:**_ 
-* this should be done in 1 shell._ `;-)`
+* this should be done in 1 shell. `;-)`
 * if you see anything weird, check the issues in this repo, even the closed ones.
  
 `git clone git@github.com:todd-dsm/gcp-tf-admin-indi.git && cd gcp-tf-admin-indi/`
 
-**Source-in your env vars by passing an argument to the script. The argument is your deployment environment; E.G.: stag, prod, etc** 
+**Source-in your env vars by passing an argument to the script. The argument is your deployment environment; E.G.: stage, prod, etc** 
 
 `source setup/env-vars.sh stage`
 
@@ -143,11 +143,11 @@ terraform apply --auto-approve -no-color \
 This will apply the plan, create a log of the proceedings and store state in the bucket; it takes about 20 seconds. To see the backup:
 
 ```
-$ gsutil ls -r gs://tester-01-yo
-gs://tester-01-yo/terraform/:
+$ gsutil ls -r gs://${TF_VAR_currentProject}
+gs://${TF_VAR_currentProject}/terraform/:
 
-gs://tester-01-yo/terraform/state/:
-gs://tester-01-yo/terraform/state/default.tfstate  <-- your state!
+gs://${TF_VAR_currentProject}/terraform/state/:
+gs://${TF_VAR_currentProject}/terraform/state/default.tfstate  <-- your state!
 ```
 
 **Destroy** the Terraformed configuration
@@ -169,6 +169,9 @@ You're left with a _project-specific_ Terraform service account that you can use
 
 Effectively, you're ready to start terraforming.
 
+
+## Challenge
+Set a DNS A Record for the host. Output the A Record, then use it to login.
 
 [gsutil]:https://cloud.google.com/storage/docs/gsutil_install
 [Homebrew]:https://brew.sh/
